@@ -1,46 +1,67 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Gift Code Printer</title>
+    <title>Gift Code Printer Test</title>
 </head>
-<body style="margin:0; padding:0; display:flex; justify-content:center; align-items:center; min-height:100vh; background:#2c3e50;">
-    <img id="giftImage" style="max-width:100%; box-shadow:0 0 20px rgba(0,0,0,0.5);">
+<body style="margin:0; padding:20px; background:#f0f0f0; text-align:center;">
+    <h2>Gift Code Printer Test</h2>
+    
+    <div id="status" style="padding:10px; margin:10px; background:yellow;">Loading...</div>
+    
+    <div id="result" style="margin:20px auto; max-width:800px;"></div>
     
     <script>
+        // Get code from URL
         var urlParams = new URLSearchParams(window.location.search);
-        var giftCode = urlParams.get('code') || 'NO CODE';
+        var giftCode = urlParams.get('code') || 'TEST123';
         
-        var canvas = document.createElement('canvas');
-        canvas.width = 800;
-        canvas.height = 400;
-        var ctx = canvas.getContext('2d');
+        document.getElementById('status').innerHTML = 'Loading image for code: ' + giftCode;
         
-        // Background
-        ctx.fillStyle = '#2c3e50';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // Your image URL
+        var imageUrl = 'https://raw.githubusercontent.com/arpita330/word_print/main/IMG_20260215_144053_492.jpg';
         
-        // Border
-        ctx.strokeStyle = '#f1c40f';
-        ctx.lineWidth = 15;
-        ctx.strokeRect(20, 20, canvas.width-40, canvas.height-40);
+        // Create image element to test loading
+        var testImg = new Image();
+        testImg.crossOrigin = "Anonymous";
+        testImg.src = imageUrl;
         
-        // "GIFT CODE" text
-        ctx.font = '40px Arial';
-        ctx.fillStyle = '#ecf0f1';
-        ctx.textAlign = 'center';
-        ctx.fillText('🎁 GIFT CODE 🎁', canvas.width/2, 100);
+        testImg.onload = function() {
+            document.getElementById('status').innerHTML = '✅ Image loaded successfully! Creating gift card...';
+            
+            // Create canvas
+            var canvas = document.createElement('canvas');
+            canvas.width = testImg.width;
+            canvas.height = testImg.height;
+            var ctx = canvas.getContext('2d');
+            
+            // Draw the image
+            ctx.drawImage(testImg, 0, 0);
+            
+            // Draw gift code (in gold)
+            ctx.font = 'bold 60px Arial';
+            ctx.fillStyle = '#FFD700';
+            ctx.shadowColor = '#000000';
+            ctx.shadowBlur = 15;
+            ctx.shadowOffsetX = 4;
+            ctx.shadowOffsetY = 4;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(giftCode, canvas.width / 2, canvas.height * 0.70);
+            
+            // Display result
+            var resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<h3>Generated Image:</h3>' +
+                '<img src="' + canvas.toDataURL('image/jpeg', 0.95) + '" style="max-width:100%; border:2px solid green;">' +
+                '<h3>Original Image (for comparison):</h3>' +
+                '<img src="' + imageUrl + '" style="max-width:100%; border:2px solid blue;">';
+            
+            document.getElementById('status').innerHTML = '✅ Success! Gift code "' + giftCode + '" printed on image.';
+        };
         
-        // The actual gift code
-        ctx.font = 'bold 80px Arial';
-        ctx.fillStyle = '#f1c40f';
-        ctx.shadowColor = '#000000';
-        ctx.shadowBlur = 15;
-        ctx.shadowOffsetX = 3;
-        ctx.shadowOffsetY = 3;
-        ctx.fillText(giftCode, canvas.width/2, 250);
-        
-        // Convert to image and display
-        document.getElementById('giftImage').src = canvas.toDataURL('image/png');
+        testImg.onerror = function() {
+            document.getElementById('status').innerHTML = '❌ ERROR: Could not load image from: ' + imageUrl;
+            document.getElementById('result').innerHTML = '<p style="color:red;">Please check if the image URL is accessible:<br>' + imageUrl + '</p>';
+        };
     </script>
 </body>
 </html>
