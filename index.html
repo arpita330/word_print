@@ -3,40 +3,53 @@
 <head>
     <title>Gift Code Printer</title>
 </head>
-<body>
+<body style="margin:0; padding:0; background:#f0f0f0; display:flex; justify-content:center; align-items:center; min-height:100vh;">
+    <img id="giftImage" style="max-width:100%; height:auto; box-shadow:0 0 20px rgba(0,0,0,0.5);">
+    
     <script>
         // Get code from URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const giftCode = urlParams.get('code') || 'NO CODE';
+        function getQueryParam(name) {
+            var urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name) || 'NO CODE';
+        }
         
-        // Create canvas
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        const img = new Image();
+        var giftCode = getQueryParam('code');
+        
+        // Create canvas and image
+        var canvas = document.createElement('canvas');
+        var ctx = canvas.getContext('2d');
+        var img = new Image();
         
         img.crossOrigin = "Anonymous";
         img.src = 'https://raw.githubusercontent.com/arpita330/word_print/main/IMG_20260215_144053_492.jpg';
         
         img.onload = function() {
+            // Set canvas size to match image
             canvas.width = img.width;
             canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
             
-            // Draw gift code in the rectangular box (adjust Y coordinate as needed)
-            ctx.font = 'bold 50px Arial';
+            // Draw background image
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            
+            // Draw gift code
+            ctx.font = 'bold 60px Arial';
             ctx.fillStyle = '#FFD700';
-            ctx.shadowColor = 'black';
-            ctx.shadowBlur = 12;
-            ctx.shadowOffsetX = 3;
-            ctx.shadowOffsetY = 3;
+            ctx.shadowColor = '#000000';
+            ctx.shadowBlur = 15;
+            ctx.shadowOffsetX = 4;
+            ctx.shadowOffsetY = 4;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             
-            // Position in the rectangular box (adjust these values)
+            // Position in the rectangular box (adjust as needed)
             ctx.fillText(giftCode, canvas.width / 2, canvas.height * 0.69);
             
-            // Convert to image and redirect
-            window.location.href = canvas.toDataURL('image/jpeg', 0.9);
+            // Display the image on the page
+            document.getElementById('giftImage').src = canvas.toDataURL('image/jpeg', 0.95);
+        };
+        
+        img.onerror = function() {
+            document.body.innerHTML = '<h2 style="color:red; text-align:center;">Error: Could not load background image</h2>';
         };
     </script>
 </body>
