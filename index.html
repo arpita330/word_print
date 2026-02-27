@@ -6,14 +6,10 @@
 <body>
     <script>
         // Get code from URL
-        function getQueryParam(name) {
-            var urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get(name) || 'NO CODE';
-        }
+        var urlParams = new URLSearchParams(window.location.search);
+        var giftCode = urlParams.get('code') || 'NO CODE';
         
-        var giftCode = getQueryParam('code');
-        
-        // Create canvas and image
+        // Create canvas
         var canvas = document.createElement('canvas');
         var ctx = canvas.getContext('2d');
         var img = new Image();
@@ -22,11 +18,8 @@
         img.src = 'https://raw.githubusercontent.com/arpita330/word_print/main/IMG_20260215_144053_492.jpg';
         
         img.onload = function() {
-            // Set canvas size to match image
             canvas.width = img.width;
             canvas.height = img.height;
-            
-            // Draw background image
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
             
             // Draw gift code
@@ -42,13 +35,9 @@
             // Position in the rectangular box
             ctx.fillText(giftCode, canvas.width / 2, canvas.height * 0.70);
             
-            // Redirect to the image data - this makes the page return an image
+            // Redirect to image data
             window.location.href = canvas.toDataURL('image/jpeg', 0.95);
-        };
-        
-        img.onerror = function() {
-            document.body.innerHTML = 'Error loading image';
         };
     </script>
 </body>
-</html>
+        </html>
