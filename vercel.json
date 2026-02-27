@@ -6,12 +6,8 @@
   },
   "routes": [
     {
-      "src": "/api/gift\\.php(.*)",
-      "dest": "/api/gift.php"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "src": "/image.php",
+      "dest": "/image.php"
     }
   ]
 }
