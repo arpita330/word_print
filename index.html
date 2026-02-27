@@ -3,69 +3,51 @@
 <head>
     <title>Gift Code Printer</title>
 </head>
-<body style="margin:0; padding:0; background:#000; display:flex; justify-content:center; align-items:center; min-height:100vh;">
-    <div id="loading" style="color:white; font-family:Arial; text-align:center;">
-        <p>Generating gift code image...</p>
-    </div>
-    
-    <img id="giftImage" style="max-width:100%; max-height:100vh; display:none;">
-    
+<body>
     <script>
         // Get code from URL
-        var urlParams = new URLSearchParams(window.location.search);
-        var giftCode = urlParams.get('code') || 'NO CODE';
+        function getQueryParam(name) {
+            var urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name) || 'NO CODE';
+        }
         
-        // Create canvas
+        var giftCode = getQueryParam('code');
+        
+        // Create canvas and image
         var canvas = document.createElement('canvas');
         var ctx = canvas.getContext('2d');
         var img = new Image();
-        
-        // Show loading
-        document.getElementById('loading').style.display = 'block';
         
         img.crossOrigin = "Anonymous";
         img.src = 'https://raw.githubusercontent.com/arpita330/word_print/main/IMG_20260215_144053_492.jpg';
         
         img.onload = function() {
-            // Set canvas size
+            // Set canvas size to match image
             canvas.width = img.width;
             canvas.height = img.height;
             
-            // Draw background
+            // Draw background image
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
             
-            // Draw gift code with better visibility
-            ctx.font = 'bold 70px Arial';
+            // Draw gift code
+            ctx.font = 'bold 60px Arial';
             ctx.fillStyle = '#FFD700';
             ctx.shadowColor = '#000000';
-            ctx.shadowBlur = 20;
-            ctx.shadowOffsetX = 5;
-            ctx.shadowOffsetY = 5;
+            ctx.shadowBlur = 15;
+            ctx.shadowOffsetX = 4;
+            ctx.shadowOffsetY = 4;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             
-            // Draw the code
+            // Position in the rectangular box
             ctx.fillText(giftCode, canvas.width / 2, canvas.height * 0.70);
             
-            // Convert to data URL
-            var imageData = canvas.toDataURL('image/jpeg', 0.95);
-            
-            // Display the image
-            var imgElement = document.getElementById('giftImage');
-            imgElement.src = imageData;
-            imgElement.style.display = 'block';
-            
-            // Hide loading
-            document.getElementById('loading').style.display = 'none';
-            
-            // For Telegram bots - directly output the image
-            if (window.location.pathname.includes('api') || window.location.search.includes('raw=1')) {
-                window.location.href = imageData;
-            }
+            // Redirect to the image data - this makes the page return an image
+            window.location.href = canvas.toDataURL('image/jpeg', 0.95);
         };
         
         img.onerror = function() {
-            document.body.innerHTML = '<h2 style="color:red; text-align:center;">Error: Could not load background image</h2>';
+            document.body.innerHTML = 'Error loading image';
         };
     </script>
 </body>
