@@ -3,7 +3,13 @@
 <head>
     <title>Gift Code Printer</title>
 </head>
-<body>
+<body style="margin:0; padding:0; background:#000; display:flex; justify-content:center; align-items:center; min-height:100vh;">
+    <div id="loading" style="color:white; font-family:Arial; text-align:center;">
+        <p>Generating gift code image...</p>
+    </div>
+    
+    <img id="giftImage" style="max-width:100%; max-height:100vh; display:none;">
+    
     <script>
         // Get code from URL
         var urlParams = new URLSearchParams(window.location.search);
@@ -14,30 +20,53 @@
         var ctx = canvas.getContext('2d');
         var img = new Image();
         
+        // Show loading
+        document.getElementById('loading').style.display = 'block';
+        
         img.crossOrigin = "Anonymous";
         img.src = 'https://raw.githubusercontent.com/arpita330/word_print/main/IMG_20260215_144053_492.jpg';
         
         img.onload = function() {
+            // Set canvas size
             canvas.width = img.width;
             canvas.height = img.height;
+            
+            // Draw background
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
             
-            // Draw gift code
-            ctx.font = 'bold 60px Arial';
+            // Draw gift code with better visibility
+            ctx.font = 'bold 70px Arial';
             ctx.fillStyle = '#FFD700';
             ctx.shadowColor = '#000000';
-            ctx.shadowBlur = 15;
-            ctx.shadowOffsetX = 4;
-            ctx.shadowOffsetY = 4;
+            ctx.shadowBlur = 20;
+            ctx.shadowOffsetX = 5;
+            ctx.shadowOffsetY = 5;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             
-            // Position in the rectangular box
+            // Draw the code
             ctx.fillText(giftCode, canvas.width / 2, canvas.height * 0.70);
             
-            // Redirect to image data
-            window.location.href = canvas.toDataURL('image/jpeg', 0.95);
+            // Convert to data URL
+            var imageData = canvas.toDataURL('image/jpeg', 0.95);
+            
+            // Display the image
+            var imgElement = document.getElementById('giftImage');
+            imgElement.src = imageData;
+            imgElement.style.display = 'block';
+            
+            // Hide loading
+            document.getElementById('loading').style.display = 'none';
+            
+            // For Telegram bots - directly output the image
+            if (window.location.pathname.includes('api') || window.location.search.includes('raw=1')) {
+                window.location.href = imageData;
+            }
+        };
+        
+        img.onerror = function() {
+            document.body.innerHTML = '<h2 style="color:red; text-align:center;">Error: Could not load background image</h2>';
         };
     </script>
 </body>
-        </html>
+</html>
