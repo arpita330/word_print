@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gift Card Generator</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #f0f0f0;
+        }
+        
+        .card-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        
+        .preview {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+        
+        .preview img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 5px;
+        }
+        
+        .text-overlay {
+            position: absolute;
+            top: 65%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 42px;
+            font-weight: bold;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.5);
+            padding: 15px 30px;
+            border-radius: 10px;
+            letter-spacing: 2px;
+            text-align: center;
+            width: 80%;
+            word-wrap: break-word;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .controls {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        button:hover {
+            background: #45a049;
+        }
+        
+        #downloadBtn {
+            background: #2196F3;
+        }
+        
+        #downloadBtn:hover {
+            background: #0b7dda;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .info {
+            color: #666;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="card-container">
+        <h1>Gift Card Generator</h1>
+        
+        <div class="preview" id="preview">
+            <img id="baseImage" src="https://raw.githubusercontent.com/arpita330/word_print/main/IMG_20260215_144053_492.jpg" alt="Gift Card Background">
+            <div class="text-overlay" id="codeOverlay">GIFT-CODE</div>
+        </div>
+        
+        <div class="controls">
+            <div class="form-group">
+                <label for="giftCode">Gift Code:</label>
+                <input type="text" id="giftCode" placeholder="Enter gift code here..." value="GIFT-CODE">
+                <div class="info">Enter the gift code to display on the image</div>
+            </div>
+            
+            <button onclick="updateCode()">Update Preview</button>
+            <button onclick="downloadImage()" id="downloadBtn">Download Image</button>
+            
+            <div id="successMessage" class="success-message" style="display: none;">
+                ✅ Image generated successfully! You can now send it to the user.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateCode() {
+            const code = document.getElementById('giftCode').value;
+            document.getElementById('codeOverlay').textContent = code;
+        }
+
+        async function downloadImage() {
+            const preview = document.getElementById('preview');
+            const code = document.getElementById('giftCode').value;
+            
+            // Show loading state
+            const downloadBtn = document.getElementById('downloadBtn');
+            const originalText = downloadBtn.textContent;
+            downloadBtn.textContent = 'Generating...';
+            downloadBtn.disabled = true;
+            
+            try {
+                // Create canvas
+                const canvas = await html2canvas(preview, {
+                    scale: 2,
+                    backgroundColor: null,
+                    allowTaint: true,
+                    useCORS: true,
+                    logging: false
+                });
+                
+                // Convert to blob
+                canvas.toBlob(function(blob) {
+                    // Create form data
+                    const formData = new FormData();
+                    formData.append('image', blob, 'gift_card.png');
+                    formData.append('code', code);
+                    
+                    // Send to bot endpoint
+                    fetch('/save-gift-image', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Show success message
+                            document.getElementById('successMessage').style.display = 'block';
+                            
+                            // Trigger download
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `gift_card_${code.replace(/[^a-zA-Z0-9]/g, '_')}.png`;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            window.URL.revokeObjectURL(url);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Error generating image. Please try again.');
+                    })
+                    .finally(() => {
+                        downloadBtn.textContent = originalText;
+                        downloadBtn.disabled = false;
+                    });
+                }, 'image/png');
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error generating image. Please try again.');
+                downloadBtn.textContent = originalText;
+                downloadBtn.disabled = false;
+            }
+        }
+    </script>
+    
+    <!-- Add html2canvas library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</body>
+              </html>
