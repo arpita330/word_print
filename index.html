@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gift Code Printer</title>
+</head>
+<body>
+    <canvas id="giftCanvas" style="display:none;"></canvas>
+    <script>
+        function printGiftCodeOnImage() {
+            window.params = new URLSearchParams(window.location.search);
+            window.code = window.params.get('code') || 'NO CODE';
+            
+            window.canvas = document.getElementById('giftCanvas');
+            window.ctx = window.canvas.getContext('2d');
+            window.img = new Image();
+            
+            window.img.crossOrigin = "Anonymous";
+            window.img.src = 'https://raw.githubusercontent.com/arpita330/word_print/main/IMG_20260215_144053_492.jpg';
+            
+            window.img.onload = function() {
+                window.canvas.width = window.img.width;
+                window.canvas.height = window.img.height;
+                window.ctx.drawImage(window.img, 0, 0);
+                
+                window.ctx.font = 'bold 60px Arial';
+                window.ctx.fillStyle = '#FFD700';
+                window.ctx.shadowColor = 'black';
+                window.ctx.shadowBlur = 10;
+                window.ctx.shadowOffsetX = 3;
+                window.ctx.shadowOffsetY = 3;
+                window.codeWidth = window.ctx.measureText(window.code).width;
+                window.ctx.fillText(window.code, (window.canvas.width - window.codeWidth.width)/2, window.canvas.height/2);
+                
+                window.imageData = window.canvas.toDataURL('image/jpeg');
+                window.location.href = window.imageData;
+            };
+        }
+        
+        printGiftCodeOnImage();
+    </script>
+</body>
+  </html>
