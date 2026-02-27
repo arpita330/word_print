@@ -3,52 +3,44 @@
 <head>
     <title>Gift Code Printer</title>
 </head>
-<body>
+<body style="margin:0; padding:0; display:flex; justify-content:center; align-items:center; min-height:100vh; background:#2c3e50;">
+    <img id="giftImage" style="max-width:100%; box-shadow:0 0 20px rgba(0,0,0,0.5);">
+    
     <script>
-        // Get code from URL
-        function getQueryParam(name) {
-            var urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get(name) || 'NO CODE';
-        }
+        var urlParams = new URLSearchParams(window.location.search);
+        var giftCode = urlParams.get('code') || 'NO CODE';
         
-        var giftCode = getQueryParam('code');
-        
-        // Create canvas and image
         var canvas = document.createElement('canvas');
+        canvas.width = 800;
+        canvas.height = 400;
         var ctx = canvas.getContext('2d');
-        var img = new Image();
         
-        img.crossOrigin = "Anonymous";
-        img.src = 'https://raw.githubusercontent.com/arpita330/word_print/main/IMG_20260215_144053_492.jpg';
+        // Background
+        ctx.fillStyle = '#2c3e50';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        img.onload = function() {
-            // Set canvas size to match image
-            canvas.width = img.width;
-            canvas.height = img.height;
-            
-            // Draw background image
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            
-            // Draw gift code
-            ctx.font = 'bold 60px Arial';
-            ctx.fillStyle = '#FFD700';
-            ctx.shadowColor = '#000000';
-            ctx.shadowBlur = 15;
-            ctx.shadowOffsetX = 4;
-            ctx.shadowOffsetY = 4;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            
-            // Position in the rectangular box
-            ctx.fillText(giftCode, canvas.width / 2, canvas.height * 0.70);
-            
-            // Redirect to the image data - this makes the page return an image
-            window.location.href = canvas.toDataURL('image/jpeg', 0.95);
-        };
+        // Border
+        ctx.strokeStyle = '#f1c40f';
+        ctx.lineWidth = 15;
+        ctx.strokeRect(20, 20, canvas.width-40, canvas.height-40);
         
-        img.onerror = function() {
-            document.body.innerHTML = 'Error loading image';
-        };
+        // "GIFT CODE" text
+        ctx.font = '40px Arial';
+        ctx.fillStyle = '#ecf0f1';
+        ctx.textAlign = 'center';
+        ctx.fillText('🎁 GIFT CODE 🎁', canvas.width/2, 100);
+        
+        // The actual gift code
+        ctx.font = 'bold 80px Arial';
+        ctx.fillStyle = '#f1c40f';
+        ctx.shadowColor = '#000000';
+        ctx.shadowBlur = 15;
+        ctx.shadowOffsetX = 3;
+        ctx.shadowOffsetY = 3;
+        ctx.fillText(giftCode, canvas.width/2, 250);
+        
+        // Convert to image and display
+        document.getElementById('giftImage').src = canvas.toDataURL('image/png');
     </script>
 </body>
 </html>
