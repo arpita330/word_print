@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Custom Text Printer</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #f0f0f0;
+        }
+        
+        .card-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        
+        .preview {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+            cursor: crosshair;
+            user-select: none;
+        }
+        
+        .preview img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 5px;
+            pointer-events: none;
+        }
+        
+        .text-overlay {
+            position: absolute;
+            color: white;
+            font-size: 42px;
+            font-weight: bold;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.5);
+            padding: 15px 30px;
+            border-radius: 10px;
+            letter-spacing: 2px;
+            text-align: center;
+            width: auto;
+            max-width: 80%;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            font-family: 'Courier New', monospace;
+            line-height: 1.2;
+            cursor: move;
+            transform: translate(-50%, -50%);
+            transition: box-shadow 0.2s;
+        }
+        
+        .text-overlay:hover {
+            box-shadow: 0 0 15px rgba(255,255,255,0.5);
+        }
+        
+        .text-overlay.dragging {
+            box-shadow: 0 0 20px rgba(255,255,255,0.8);
+            z-index: 1000;
+        }
+        
+        .controls {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        input[type="text"],
+        input[type="number"],
+        input[type="color"],
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="color"] {
+            height: 45px;
+            padding: 5px;
+            cursor: pointer;
+        }
+        
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+        }
+        
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background 0.3s;
+        }
+        
+        button:hover:not(:disabled) {
+            background: #45a049;
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        #downloadBtn {
+            background: #2196F3;
+        }
+        
+        #downloadBtn:hover:not(:disabled) {
+            background: #0b7dda;
+        }
+        
+        #copyUrlBtn {
+            background: #9C27B0;
+        }
+        
+        #copyUrlBtn:hover:not(:disabled) {
+            background: #7B1FA2;
+        }
+        
+        .message {
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            border: 1px solid transparent;
+            display: none;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            border-color: #c3e6cb;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            border-color: #f5c6cb;
+        }
+        
+        .info-text {
+            color: #666;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        
+        .url-box {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            word-break: break-all;
+            font-family: monospace;
+        }
+        
+        .position-info {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #1976d2;
+        }
+        
+        hr {
+            border: none;
+            border-top: 1px solid #ddd;
+            margin: 20px 0;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #4CAF50;
+        }
+        
+        .share-section {
+            background: #f3e5f5;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="card-container">
+        <h1>🎨 URL Text Printer</h1>
+        <p class="info-text">Pass text via URL: <code>?print=Your_Text_Here</code> or use the controls below</p>
+        
+        <div class="preview" id="preview">
+            <img id="baseImage" src="https://raw.githubusercontent.com/arpita330/word_print/main/IMG_20260215_144053_492.jpg" alt="Background Image" crossorigin="anonymous">
+            <div class="text-overlay" id="codeOverlay">Your Text Here</div>
+        </div>
+        
+        <div class="position-info" id="positionInfo">
+            📍 Text Position: X: <span id="posX">50</span>%, Y: <span id="posY">65</span>%
+        </div>
+        
+        <div class="controls">
+            <div class="section-title">✏️ Text Content</div>
+            <div class="form-group">
+                <label for="giftCode">Your Text:</label>
+                <input type="text" id="giftCode" placeholder="Enter your text here..." maxlength="100">
+            </div>
+            
+            <div class="share-section">
+                <h3>🔗 Shareable Link</h3>
+                <p class="info-text">Copy this URL to share your text with others:</p>
+                <div class="url-box" id="shareUrl"></div>
+                <button onclick="copyShareUrl()" id="copyUrlBtn">📋 Copy URL</button>
+            </div>
+            
+            <hr>
+            
+            <div class="section-title">🎨 Text Styling</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="fontSize">Font Size (px):</label>
+                    <input type="number" id="fontSize" value="42" min="12" max="200">
+                </div>
+                <div class="form-group">
+                    <label for="fontFamily">Font Family:</label>
+                    <select id="fontFamily">
+                        <option value="'Courier New', monospace">Courier New</option>
+                        <option value="Arial, sans-serif">Arial</option>
+                        <option value="'Times New Roman', serif">Times New Roman</option>
+                        <option value="Georgia, serif">Georgia</option>
+                        <option value="Verdana, sans-serif">Verdana</option>
+                        <option value="'Comic Sans MS', cursive">Comic Sans MS</option>
+                        <option value="Impact, sans-serif">Impact</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="textColor">Text Color:</label>
+                    <input type="color" id="textColor" value="#ffffff">
+                </div>
+                <div class="form-group">
+                    <label for="bgColor">Background Color:</label>
+                    <input type="color" id="bgColor" value="#000000">
+                </div>
+                <div class="form-group">
+                    <label for="bgOpacity">Background Opacity:</label>
+                    <input type="number" id="bgOpacity" value="0.5" min="0" max="1" step="0.1">
+                </div>
+            </div>
+            
+            <hr>
+            
+            <button onclick="applyAllChanges()">✨ Apply Changes</button>
+            <button onclick="downloadImage()" id="downloadBtn">📥 Download Image</button>
+            <button onclick="resetToDefault()">🔄 Reset Default</button>
+            
+            <div id="messageBox" class="message"></div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const codeOverlay = document.getElementById('codeOverlay');
+        const preview = document.getElementById('preview');
+        const messageBox = document.getElementById('messageBox');
+        const downloadBtn = document.getElementById('downloadBtn');
+        
+        // Input elements
+        const giftCodeInput = document.getElementById('giftCode');
+        const fontSizeInput = document.getElementById('fontSize');
+        const fontFamilyInput = document.getElementById('fontFamily');
+        const textColorInput = document.getElementById('textColor');
+        const bgColorInput = document.getElementById('bgColor');
+        const bgOpacityInput = document.getElementById('bgOpacity');
+        
+        // Position tracking
+        let currentX = 50;
+        let currentY = 65;
+        
+        // Get URL parameter
+        function getUrlParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+        
+        // Initialize from URL parameter
+        function initFromUrl() {
+            const printText = getUrlParameter('print');
+            if (printText) {
+                // Replace underscores and plus signs with spaces
+                const decodedText = printText.replace(/_/g, ' ').replace(/\+/g, ' ');
+                giftCodeInput.value = decodedText;
+                codeOverlay.textContent = decodedText;
+                updateShareUrl();
+                showMessage('✅ Text loaded from URL!', 'success');
+            } else {
+                giftCodeInput.value = 'Your Text Here';
+                codeOverlay.textContent = 'Your Text Here';
+                updateShareUrl();
+            }
+        }
+        
+        // Update share URL
+        function updateShareUrl() {
+            const text = giftCodeInput.value.trim();
+            if (text && text !== 'Your Text Here') {
+                // Encode text for URL (replace spaces with underscores)
+                const encodedText = text.replace(/\s+/g, '_');
+                const shareUrl = window.location.origin + window.location.pathname + '?print=' + encodedText;
+                document.getElementById('shareUrl').textContent = shareUrl;
+            } else {
+                document.getElementById('shareUrl').textContent = window.location.origin + window.location.pathname + '?print=Your_Text_Here';
+            }
+        }
+        
+        // Copy URL to clipboard
+        async function copyShareUrl() {
+            const urlText = document.getElementById('shareUrl').textContent;
+            try {
+                await navigator.clipboard.writeText(urlText);
+                showMessage('📋 URL copied to clipboard!', 'success');
+            } catch (err) {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = urlText;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showMessage('📋 URL copied to clipboard!', 'success');
+            }
+        }
+        
+        // Apply text styling
+        function applyTextStyling() {
+            codeOverlay.style.fontSize = fontSizeInput.value + 'px';
+            codeOverlay.style.fontFamily = fontFamilyInput.value;
+            codeOverlay.style.color = textColorInput.value;
+            
+            const hexColor = bgColorInput.value;
+            const r = parseInt(hexColor.slice(1,3), 16);
+            const g = parseInt(hexColor.slice(3,5), 16);
+            const b = parseInt(hexColor.slice(5,7), 16);
+            const opacity = bgOpacityInput.value;
+            codeOverlay.style.backgroundColor = `rgba(${r}, ${g}, ${b}, ${opacity})`;
+        }
+        
+        // Apply all changes
+        function applyAllChanges() {
+            const text = giftCodeInput.value.trim();
+            codeOverlay.textContent = text || 'Your Text Here';
+            applyTextStyling();
+            updateShareUrl();
+            showMessage('✅ Changes applied!', 'success');
+        }
+        
+        // Update share URL when text changes
+        giftCodeInput.addEventListener('input', function() {
+            codeOverlay.textContent = this.value || 'Your Text Here';
+            updateShareUrl();
+        });
+        
+        // Click on preview to position text
+        preview.addEventListener('click', function(e) {
+            const rect = preview.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width) * 100;
+            const y = ((e.clientY - rect.top) / rect.height) * 100;
+            
+            updateOverlayPosition(Math.round(x), Math.round(y));
+        });
+        
+        function updateOverlayPosition(x, y) {
+            codeOverlay.style.left = x + '%';
+            codeOverlay.style.top = y + '%';
+            document.getElementById('posX').textContent = x;
+            document.getElementById('posY').textContent = y;
+            currentX = x;
+            currentY = y;
+        }
+        
+        // Drag functionality
+        let isDragging = false;
+        let dragStartX, dragStartY, elementStartX, elementStartY;
+        
+        codeOverlay.addEventListener('mousedown', function(e) {
+            isDragging = true;
+            codeOverlay.classList.add('dragging');
+            
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+            elementStartX = currentX;
+            elementStartY = currentY;
+            
+            e.preventDefault();
+        });
+        
+        document.addEventListener('mousemove', function(e) {
+            if (!isDragging) return;
+            
+            const rect = preview.getBoundingClientRect();
+            const deltaX = ((e.clientX - dragStartX) / rect.width) * 100;
+            const deltaY = ((e.clientY - dragStartY) / rect.height) * 100;
+            
+            const newX = Math.max(0, Math.min(100, elementStartX + deltaX));
+            const newY = Math.max(0, Math.min(100, elementStartY + deltaY));
+            
+            updateOverlayPosition(Math.round(newX), Math.round(newY));
+        });
+        
+        document.addEventListener('mouseup', function() {
+            if (isDragging) {
+                isDragging = false;
+                codeOverlay.classList.remove('dragging');
+            }
+        });
+        
+        // Reset to default
+        function resetToDefault() {
+            giftCodeInput.value = 'Your Text Here';
+            fontSizeInput.value = 42;
+            fontFamilyInput.value = "'Courier New', monospace";
+            textColorInput.value = '#ffffff';
+            bgColorInput.value = '#000000';
+            bgOpacityInput.value = 0.5;
+            
+            codeOverlay.textContent = 'Your Text Here';
+            applyTextStyling();
+            updateOverlayPosition(50, 65);
+            updateShareUrl();
+            
+            showMessage('🔄 Reset to default settings!', 'success');
+        }
+        
+        // Message functions
+        function showMessage(message, type) {
+            messageBox.textContent = message;
+            messageBox.className = `message ${type}-message`;
+            messageBox.style.display = 'block';
+            setTimeout(() => {
+                messageBox.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Download function
+        async function downloadImage() {
+            const text = giftCodeInput.value.trim();
+            
+            if (!text) {
+                showMessage('❌ Please enter some text first.', 'error');
+                return;
+            }
+            
+            downloadBtn.disabled = true;
+            const originalText = downloadBtn.textContent;
+            downloadBtn.textContent = 'Generating...';
+            
+            try {
+                const canvas = await html2canvas(preview, {
+                    scale: 2,
+                    backgroundColor: null,
+                    allowTaint: true,
+                    useCORS: true,
+                    logging: false
+                });
+                
+                const blob = await new Promise(resolve => {
+                    canvas.toBlob(resolve, 'image/png');
+                });
+                
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `custom_text_${sanitizeFilename(text)}.png`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+                
+                showMessage('✅ Image generated and downloaded successfully!', 'success');
+                
+            } catch (error) {
+                console.error('Generation error:', error);
+                showMessage('❌ Error generating image. Please try again.', 'error');
+            } finally {
+                downloadBtn.disabled = false;
+                downloadBtn.textContent = originalText;
+            }
+        }
+        
+        function sanitizeFilename(name) {
+            return name.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 50);
+        }
+        
+        // Initialize on load
+        window.addEventListener('load', function() {
+            initFromUrl();
+            applyTextStyling();
+            updateShareUrl();
+        });
+    </script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</body>
+</html>
